@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-list-check"></i> Todo List</h1>
+        </header>
+        
+        <div class="todo-form">
+            <input type="text" id="todoInput" placeholder="Add a new task...">
+            <input type="date" id="dateInput">
+            <button id="addBtn"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-value" id="totalTasks">0</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="completedTasks">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="pendingTasks">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-header">
+                <div>Progress</div>
+                <div id="progressPercent">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <div class="controls-container">
+            <div class="filter-container">
+                <button class="filter-btn" id="filterBtn">
+                    <span><i class="fas fa-filter"></i> Filter: <span id="currentFilter">All Tasks</span></span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="filter-dropdown" id="filterDropdown">
+                    <div class="filter-option" data-filter="all">
+                        <i class="fas fa-list"></i> All Tasks
+                    </div>
+                    <div class="filter-option" data-filter="completed">
+                        <i class="fas fa-check-circle"></i> Completed
+                    </div>
+                    <div class="filter-option" data-filter="pending">
+                        <i class="fas fa-clock"></i> Pending
+                    </div>
+                </div>
+            </div>
+            <button id="deleteAllBtn"><i class="fas fa-trash"></i> Delete All</button>
+        </div>
+        
+        <div class="todo-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>TASK</th>
+                        <th>DUE DATE</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="todoList">
+                    <tr class="empty-row" id="emptyState">
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No tasks yet</h3>
+                            <p>Add a new task to get started</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="js/script.js"></script>
+</body>
+</html>

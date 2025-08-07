@@ -3,20 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List</title>
+    <title>PurpleTask</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div class="notification" id="notification">
+        <button class="close" onclick="closeNotification()">&times;</button>
+        <h4 id="notificationTitle">Task Deadline</h4>
+        <p id="notificationMessage">Your task is due soon!</p>
+    </div>
+
     <div class="container">
         <header>
-            <h1><i class="fas fa-list-check"></i> Todo List</h1>
+            <h1><i class="fas fa-list-check"></i>PurpleTask</h1>
         </header>
         
         <div class="todo-form">
-            <input type="text" id="todoInput" placeholder="Add a new task...">
-            <input type="date" id="dateInput">
-            <button id="addBtn"><i class="fas fa-plus"></i> Add</button>
+            <div class="input-group">
+                <label for="todoInput">TASK NAME</label>
+                <input type="text" id="todoInput" placeholder="Add a new task...">
+            </div>
+            
+            <div class="input-group">
+                <label for="dateInput">DUE DATE</label>
+                <input type="date" id="dateInput">
+            </div>
+            
+            <div class="input-group">
+                <label for="timeInput">DUE TIME</label>
+                <input type="time" id="timeInput">
+            </div>
+            
+            <div class="input-group">
+                <label for="prioritySelect">PRIORITY</label>
+                <select id="prioritySelect">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            
+            <div class="input-group" style="justify-content: center;" style="margin-top: 4rem;">
+                <label>&nbsp;</label>
+                <button id="addBtn"><i class="fas fa-plus"></i> Add Task</button>
+            </div>
         </div>
         
         <div class="stats-container">
@@ -32,11 +63,15 @@
                 <div class="stat-value" id="pendingTasks">0</div>
                 <div class="stat-label">Pending</div>
             </div>
+            <div class="stat-box">
+                <div class="stat-value" id="dueSoon">0</div>
+                <div class="stat-label">Due Soon</div>
+            </div>
         </div>
         
         <div class="progress-container">
             <div class="progress-header">
-                <div>Progress</div>
+                <div>Your Progress</div>
                 <div id="progressPercent">0%</div>
             </div>
             <div class="progress-bar">
@@ -60,8 +95,36 @@
                     <div class="filter-option" data-filter="pending">
                         <i class="fas fa-clock"></i> Pending
                     </div>
+                    <div class="filter-option" data-filter="today">
+                        <i class="fas fa-calendar-day"></i> Due Today
+                    </div>
+                    <div class="filter-option" data-filter="high">
+                        <i class="fas fa-exclamation-circle"></i> High Priority
+                    </div>
                 </div>
             </div>
+            
+            <div class="filter-container">
+                <button class="filter-btn" id="sortBtn">
+                    <span><i class="fas fa-sort"></i> Sort By: <span id="currentSort">Due Date</span></span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="filter-dropdown" id="sortDropdown">
+                    <div class="filter-option" data-sort="date-asc">
+                        <i class="fas fa-sort-amount-up"></i> Due Date (Asc)
+                    </div>
+                    <div class="filter-option" data-sort="date-desc">
+                        <i class="fas fa-sort-amount-down-alt"></i> Due Date (Desc)
+                    </div>
+                    <div class="filter-option" data-sort="priority">
+                        <i class="fas fa-flag"></i> Priority
+                    </div>
+                    <div class="filter-option" data-sort="name">
+                        <i class="fas fa-font"></i> Task Name
+                    </div>
+                </div>
+            </div>
+            
             <button id="deleteAllBtn"><i class="fas fa-trash"></i> Delete All</button>
         </div>
         
@@ -70,14 +133,16 @@
                 <thead>
                     <tr>
                         <th>TASK</th>
-                        <th>DUE DATE</th>
+                        <th>DUE DATE & TIME</th>
+                        <th>TIME LEFT</th>
+                        <th>PRIORITY</th>
                         <th>STATUS</th>
                         <th>ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody id="todoList">
                     <tr class="empty-row" id="emptyState">
-                        <td colspan="4" class="empty-state">
+                        <td colspan="6" class="empty-state">
                             <i class="fas fa-clipboard-list"></i>
                             <h3>No tasks yet</h3>
                             <p>Add a new task to get started</p>

@@ -4,25 +4,28 @@ let currentFilter = 'all';
 let currentSort = 'date-asc';
 let notificationTimeout;
 
-// DOM Elements
-const notification = document.getElementById('notification');
-const notificationTitle = document.getElementById('notificationTitle');
-const notificationMessage = document.getElementById('notificationMessage');
-const todoInput = document.getElementById('todoInput');
-const dateInput = document.getElementById('dateInput');
-const timeInput = document.getElementById('timeInput');
-const prioritySelect = document.getElementById('prioritySelect');
-const addBtn = document.getElementById('addBtn');
-const filterBtn = document.getElementById('filterBtn');
-const sortBtn = document.getElementById('sortBtn');
-const deleteAllBtn = document.getElementById('deleteAllBtn');
-const filterDropdown = document.getElementById('filterDropdown');
-const sortDropdown = document.getElementById('sortDropdown');
-const todoList = document.getElementById('todoList');
-const emptyState = document.getElementById('emptyState');
+// DOM Elements (will be initialized in initApp)
+let todoInput, dateInput, timeInput, prioritySelect, addBtn, filterBtn, sortBtn, deleteAllBtn, 
+    filterDropdown, sortDropdown, todoList, emptyState, notificationTitle, notificationMessage;
 
 // Initialize the app
 function initApp() {
+    // Initialize DOM elements
+    todoInput = document.getElementById('todoInput');
+    dateInput = document.getElementById('dateInput');
+    timeInput = document.getElementById('timeInput');
+    prioritySelect = document.getElementById('prioritySelect');
+    addBtn = document.getElementById('addBtn');
+    filterBtn = document.getElementById('filterBtn');
+    sortBtn = document.getElementById('sortBtn');
+    deleteAllBtn = document.getElementById('deleteAllBtn');
+    filterDropdown = document.getElementById('filterDropdown');
+    sortDropdown = document.getElementById('sortDropdown');
+    todoList = document.getElementById('todoList');
+    emptyState = document.getElementById('emptyState');
+    notificationTitle = document.getElementById('notificationTitle');
+    notificationMessage = document.getElementById('notificationMessage');
+    
     // Load todos from localStorage
     loadTodos();
     
@@ -287,6 +290,16 @@ function createTodoRow(todo, timeLeft) {
     `;
     
     return row;
+}
+
+// Get priority icon
+function getPriorityIcon(priority) {
+    switch(priority) {
+        case 'high': return 'fa-exclamation-circle';
+        case 'medium': return 'fa-minus-circle';
+        case 'low': return 'fa-arrow-down';
+        default: return 'fa-circle';
+    }
 }
 
 // Capitalize first letter

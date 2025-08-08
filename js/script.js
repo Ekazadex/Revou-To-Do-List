@@ -289,15 +289,6 @@ function createTodoRow(todo, timeLeft) {
     return row;
 }
 
-// Get priority icon
-function getPriorityIcon(priority) {
-    switch(priority) {
-        case 'high': return 'fa-exclamation-circle';
-        case 'medium': return 'fa-arrow-circle-right';
-        default: return 'fa-arrow-circle-down';
-    }
-}
-
 // Capitalize first letter
 function capitalizeFirst(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);

@@ -295,10 +295,10 @@ function createTodoRow(todo, timeLeft) {
 // Get priority icon
 function getPriorityIcon(priority) {
     switch(priority) {
-        case 'high': return 'fa-exclamation-circle';
-        case 'medium': return 'fa-minus-circle';
-        case 'low': return 'fa-arrow-down';
-        default: return 'fa-circle';
+        case 'high': return '';
+        case 'medium': return '';
+        case 'low': return '';
+        default: return '';
     }
 }
 

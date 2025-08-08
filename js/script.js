@@ -3,29 +3,28 @@ let todos = [];
 let currentFilter = 'all';
 let currentSort = 'date-asc';
 let notificationTimeout;
+
+// DOM Elements
 const notification = document.getElementById('notification');
 const notificationTitle = document.getElementById('notificationTitle');
 const notificationMessage = document.getElementById('notificationMessage');
-
-// DOM Elements
+const todoInput = document.getElementById('todoInput');
+const dateInput = document.getElementById('dateInput');
+const timeInput = document.getElementById('timeInput');
+const prioritySelect = document.getElementById('prioritySelect');
 const addBtn = document.getElementById('addBtn');
 const filterBtn = document.getElementById('filterBtn');
 const sortBtn = document.getElementById('sortBtn');
 const deleteAllBtn = document.getElementById('deleteAllBtn');
 const filterDropdown = document.getElementById('filterDropdown');
 const sortDropdown = document.getElementById('sortDropdown');
-const todoInput = document.getElementById('todoInput');
-const dateInput = document.getElementById('dateInput');
-const timeInput = document.getElementById('timeInput');
-const prioritySelect = document.getElementById('prioritySelect');
+const todoList = document.getElementById('todoList');
+const emptyState = document.getElementById('emptyState');
 
 // Initialize the app
 function initApp() {
     // Load todos from localStorage
-    const savedTodos = localStorage.getItem('todos');
-    if (savedTodos) {
-        todos = JSON.parse(savedTodos);
-    }
+    loadTodos();
     
     // Setup event listeners
     setupEventListeners();
@@ -33,8 +32,19 @@ function initApp() {
     // Render initial todos
     renderTodos();
     
-    // Check for due tasks every minute
-    setInterval(renderTodos, 60000);
+    // Start periodic checks
+    startPeriodicChecks();
+}
+
+// Load todos from localStorage
+function loadTodos() {
+    const savedTodos = localStorage.getItem('todos');
+    todos = savedTodos ? JSON.parse(savedTodos) : [];
+}
+
+// Save todos to localStorage
+function saveTodos() {
+    localStorage.setItem('todos', JSON.stringify(todos));
 }
 
 // Set up event listeners
@@ -44,7 +54,7 @@ function setupEventListeners() {
     sortBtn.addEventListener('click', toggleSortDropdown);
     deleteAllBtn.addEventListener('click', deleteAllTodos);
     
-    // Set up filter options
+    // Setup filter options
     document.querySelectorAll('.filter-option[data-filter]').forEach(option => {
         option.addEventListener('click', () => {
             currentFilter = option.getAttribute('data-filter');
@@ -54,7 +64,7 @@ function setupEventListeners() {
         });
     });
     
-    // Set up sort options
+    // Setup sort options
     document.querySelectorAll('.filter-option[data-sort]').forEach(option => {
         option.addEventListener('click', () => {
             currentSort = option.getAttribute('data-sort');
@@ -64,54 +74,60 @@ function setupEventListeners() {
         });
     });
     
-    // Add keyboard support for Enter key
-    todoInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addTodo();
-        }
+    // Add task on Enter key
+    todoInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') addTodo();
     });
 }
 
 // Add new todo
 function addTodo() {
-    if (!todoInput.value.trim()) {
+    const task = todoInput.value.trim();
+    const date = dateInput.value;
+    const time = timeInput.value;
+    const priority = prioritySelect.value;
+    
+    // Validate input
+    if (!task) {
         showNotification('Input Error', 'Please enter a task name!');
         todoInput.focus();
         return;
     }
     
-    if (!dateInput.value) {
+    if (!date) {
         showNotification('Input Error', 'Please select a due date!');
         dateInput.focus();
         return;
     }
     
-    if (!timeInput.value) {
+    if (!time) {
         showNotification('Input Error', 'Please select a due time!');
         timeInput.focus();
         return;
     }
 
-    // Create new todo object
-    const dueDate = new Date(`${dateInput.value}T${timeInput.value}`);
+    // Create due date object
+    const dueDate = new Date(`${date}T${time}`);
     if (isNaN(dueDate.getTime())) {
-        showNotification('Input Error', 'Invalid date or time format!');
+        showNotification('Input Error', 'Invalid date or time!');
         return;
     }
 
+    // Create todo object
     const todo = {
-        id: Date.now(), // unique id
-        task: todoInput.value.trim(),
-        date: formatDate(dateInput.value),
-        time: formatTime(timeInput.value),
+        id: Date.now(),
+        task,
+        date: formatDate(date),
+        time: formatTime(time),
         dueDateTime: dueDate.getTime(),
-        formattedDateTime: `${formatDate(dateInput.value)} at ${formatTime(timeInput.value)}`,
+        formattedDateTime: `${formatDate(date)} at ${formatTime(time)}`,
         completed: false,
-        priority: prioritySelect.value
+        priority
     };
 
+    // Add to todos array
     todos.push(todo);
-    saveToLocalStorage();
+    saveTodos();
     renderTodos();
     
     // Reset form
@@ -121,7 +137,7 @@ function addTodo() {
     prioritySelect.value = 'medium';
     todoInput.focus();
     
-    showNotification('Task Added', `"${todo.task}" has been added to your list!`);
+    showNotification('Task Added', `"${todo.task}" has been added!`);
 }
 
 // Format date to display
@@ -149,11 +165,7 @@ function calculateTimeLeft(dueDateTime) {
     const diff = dueDateTime - now;
     
     if (diff < 0) {
-        return {
-            text: 'Overdue!',
-            class: 'time-critical',
-            critical: true
-        };
+        return { text: 'Overdue!', class: 'time-critical' };
     }
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -161,121 +173,134 @@ function calculateTimeLeft(dueDateTime) {
     
     if (hours < 24) {
         if (hours < 1) {
-            return {
-                text: `${minutes} min left`,
-                class: 'time-critical',
-                critical: true
-            };
+            return { text: `${minutes} min left`, class: 'time-critical' };
         }
-        return {
-            text: `${hours} hr ${minutes} min left`,
-            class: 'time-warning',
-            warning: true
-        };
+        return { text: `${hours} hr ${minutes} min left`, class: 'time-warning' };
     }
     
     const days = Math.floor(hours / 24);
-    return {
-        text: `${days} day${days > 1 ? 's' : ''} left`,
-        class: 'time-normal'
-    };
+    return { text: `${days} day${days > 1 ? 's' : ''} left`, class: 'time-normal' };
 }
 
-// Render todos
+// Render todos to the table
 function renderTodos() {
-    const todoList = document.getElementById('todoList');
-    const emptyState = document.getElementById('emptyState');
+    // Clear current list
+    todoList.innerHTML = '';
     
-    // Filter todos
-    let filteredTodos;
+    // Get filtered and sorted todos
+    const filteredTodos = filterTodos();
+    const sortedTodos = sortTodos(filteredTodos);
+    
+    if (sortedTodos.length === 0) {
+        emptyState.style.display = 'table-row';
+        todoList.appendChild(emptyState);
+        updateStats();
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Create table rows
+    sortedTodos.forEach(todo => {
+        const timeLeft = calculateTimeLeft(todo.dueDateTime);
+        const row = createTodoRow(todo, timeLeft);
+        todoList.appendChild(row);
+    });
+    
+    updateStats();
+    checkDueSoonTasks();
+}
+
+// Filter todos based on current filter
+function filterTodos() {
     switch(currentFilter) {
-        case 'completed':
-            filteredTodos = todos.filter(todo => todo.completed);
-            break;
-        case 'pending':
-            filteredTodos = todos.filter(todo => !todo.completed);
-            break;
-        case 'today':
+        case 'completed': 
+            return todos.filter(todo => todo.completed);
+        case 'pending': 
+            return todos.filter(todo => !todo.completed);
+        case 'today': 
             const today = new Date();
-            filteredTodos = todos.filter(todo => {
+            return todos.filter(todo => {
                 const todoDate = new Date(todo.dueDateTime);
                 return todoDate.getDate() === today.getDate() && 
                        todoDate.getMonth() === today.getMonth() && 
                        todoDate.getFullYear() === today.getFullYear();
             });
-            break;
-        case 'high':
-            filteredTodos = todos.filter(todo => todo.priority === 'high');
-            break;
-        default:
-            filteredTodos = [...todos];
+        case 'high': 
+            return todos.filter(todo => todo.priority === 'high');
+        default: 
+            return [...todos];
     }
-    
-    // Sort todos
+}
+
+// Sort todos based on current sort
+function sortTodos(todosArray) {
     switch(currentSort) {
-        case 'date-asc':
-            filteredTodos.sort((a, b) => a.dueDateTime - b.dueDateTime);
-            break;
-        case 'date-desc':
-            filteredTodos.sort((a, b) => b.dueDateTime - a.dueDateTime);
-            break;
-        case 'priority':
+        case 'date-asc': 
+            return [...todosArray].sort((a, b) => a.dueDateTime - b.dueDateTime);
+        case 'date-desc': 
+            return [...todosArray].sort((a, b) => b.dueDateTime - a.dueDateTime);
+        case 'priority': 
             const priorityOrder = { high: 1, medium: 2, low: 3 };
-            filteredTodos.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || a.dueDateTime - b.dueDateTime);
-            break;
-        case 'name':
-            filteredTodos.sort((a, b) => a.task.localeCompare(b.task));
-            break;
+            return [...todosArray].sort((a, b) => 
+                priorityOrder[a.priority] - priorityOrder[b.priority] || 
+                a.dueDateTime - b.dueDateTime
+            );
+        case 'name': 
+            return [...todosArray].sort((a, b) => a.task.localeCompare(b.task));
+        default: 
+            return todosArray;
     }
+}
+
+// Create todo table row
+function createTodoRow(todo, timeLeft) {
+    const row = document.createElement('tr');
+    row.className = `priority-${todo.priority}`;
     
-    // Clear the list
-    todoList.innerHTML = '';
+    row.innerHTML = `
+        <td class="${todo.completed ? 'completed' : ''}">
+            <i class="fas ${getPriorityIcon(todo.priority)}"></i>
+            ${todo.task}
+        </td>
+        <td>${todo.formattedDateTime}</td>
+        <td>
+            <span class="time-left ${timeLeft.class}">${timeLeft.text}</span>
+        </td>
+        <td>
+            <span class="priority-${todo.priority}">${capitalizeFirst(todo.priority)}</span>
+        </td>
+        <td>
+            <button onclick="toggleStatus(${todo.id})" class="status-btn ${todo.completed ? 'completed' : 'pending'}">
+                <i class="fas ${todo.completed ? 'fa-check' : 'fa-spinner'}"></i>
+                ${todo.completed ? 'Completed' : 'Pending'}
+            </button>
+        </td>
+        <td class="actions-cell">
+            <button onclick="editTodo(${todo.id})" class="action-btn">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteTodo(${todo.id})" class="action-btn delete-btn">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
     
-    if (filteredTodos.length === 0) {
-        emptyState.style.display = 'table-row';
-        todoList.appendChild(emptyState);
-    } else {
-        emptyState.style.display = 'none';
-        
-        filteredTodos.forEach(todo => {
-            const timeLeft = calculateTimeLeft(todo.dueDateTime);
-            const priorityClass = `priority-${todo.priority}`;
-            
-            const row = document.createElement('tr');
-            row.className = priorityClass;
-            row.innerHTML = `
-                <td class="${todo.completed ? 'completed' : ''}">
-                    <i class="fas ${todo.priority === 'high' ? 'fa-exclamation-circle' : todo.priority === 'medium' ? 'fa-arrow-circle-right' : 'fa-arrow-circle-down'}"></i>
-                    ${todo.task}
-                </td>
-                <td>${todo.formattedDateTime}</td>
-                <td>
-                    <span class="time-left ${timeLeft.class}">${timeLeft.text}</span>
-                </td>
-                <td>
-                    <span class="priority-${todo.priority}">${todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}</span>
-                </td>
-                <td>
-                    <button onclick="toggleStatus(${todo.id})" class="status-btn ${todo.completed ? 'completed' : 'pending'}">
-                        <i class="fas ${todo.completed ? 'fa-check' : 'fa-spinner'}"></i>
-                        ${todo.completed ? 'Completed' : 'Pending'}
-                    </button>
-                </td>
-                <td class="actions-cell">
-                    <button onclick="editTodo(${todo.id})" class="action-btn">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteTodo(${todo.id})" class="action-btn delete-btn">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            todoList.appendChild(row);
-        });
+    return row;
+}
+
+// Get priority icon
+function getPriorityIcon(priority) {
+    switch(priority) {
+        case 'high': return 'fa-exclamation-circle';
+        case 'medium': return 'fa-arrow-circle-right';
+        default: return 'fa-arrow-circle-down';
     }
-    
-    updateStats();
-    checkDueSoonTasks();
+}
+
+// Capitalize first letter
+function capitalizeFirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Update statistics
@@ -328,25 +353,25 @@ function checkDueSoonTasks() {
 
 // Toggle task status
 function toggleStatus(id) {
-    const todoIndex = todos.findIndex(t => t.id === id);
-    if (todoIndex !== -1) {
-        todos[todoIndex].completed = !todos[todoIndex].completed;
-        saveToLocalStorage();
+    const todo = todos.find(t => t.id === id);
+    if (todo) {
+        todo.completed = !todo.completed;
+        saveTodos();
         renderTodos();
         
-        const status = todos[todoIndex].completed ? 'completed' : 'pending';
-        showNotification('Task Updated', `"${todos[todoIndex].task}" marked as ${status}`);
+        const status = todo.completed ? 'completed' : 'pending';
+        showNotification('Task Updated', `"${todo.task}" marked as ${status}`);
     }
 }
 
 // Delete a task
 function deleteTodo(id) {
     if (confirm('Are you sure you want to delete this task?')) {
-        const todoIndex = todos.findIndex(t => t.id === id);
-        if (todoIndex !== -1) {
-            const taskName = todos[todoIndex].task;
-            todos.splice(todoIndex, 1);
-            saveToLocalStorage();
+        const index = todos.findIndex(t => t.id === id);
+        if (index !== -1) {
+            const taskName = todos[index].task;
+            todos.splice(index, 1);
+            saveTodos();
             renderTodos();
             showNotification('Task Deleted', `"${taskName}" has been removed`);
         }
@@ -359,7 +384,7 @@ function deleteAllTodos() {
     
     if (confirm('Are you sure you want to delete ALL tasks?')) {
         todos = [];
-        saveToLocalStorage();
+        saveTodos();
         renderTodos();
         showNotification('All Tasks Cleared', 'Your todo list is now empty');
     }
@@ -367,15 +392,15 @@ function deleteAllTodos() {
 
 // Edit a task
 function editTodo(id) {
-    const todoIndex = todos.findIndex(t => t.id === id);
-    if (todoIndex !== -1) {
-        const newTask = prompt('Edit task:', todos[todoIndex].task);
+    const todo = todos.find(t => t.id === id);
+    if (todo) {
+        const newTask = prompt('Edit task:', todo.task);
         if (newTask !== null && newTask.trim() !== '') {
-            const oldTask = todos[todoIndex].task;
-            todos[todoIndex].task = newTask.trim();
-            saveToLocalStorage();
+            const oldTask = todo.task;
+            todo.task = newTask.trim();
+            saveTodos();
             renderTodos();
-            showNotification('Task Updated', `"${oldTask}" has been renamed to "${newTask.trim()}"`);
+            showNotification('Task Updated', `"${oldTask}" renamed to "${newTask.trim()}"`);
         }
     }
 }
@@ -420,10 +445,13 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Save todos to localStorage
-function saveToLocalStorage() {
-    localStorage.setItem('todos', JSON.stringify(todos));
+// Start periodic checks
+function startPeriodicChecks() {
+    // Check every minute
+    setInterval(() => {
+        renderTodos();
+    }, 60000);
 }
 
-// Start the app when DOM is loaded
+// Start the app
 document.addEventListener('DOMContentLoaded', initApp);
